@@ -26,6 +26,12 @@ contract FundMe {
         _;
     }
 
+    
+    modifier onlyDono() {
+        require(msg.sender == owner, "Sender is not owner!");
+        _;
+    }
+
     function fund() public payable  {
         // allow user to send money
         // have a minimum $ sent of 5 USD
@@ -34,7 +40,7 @@ contract FundMe {
         addressToAmountFunded[msg.sender] = addressToAmountFunded[msg.sender] + msg.value;
     }
 
-    function withdraw() public onlyOwner {
+    function withdraw() public onlyOwner onlyDono {
 
         // transfer
         //payable(msg.sender).transfer(address(this).balance);
