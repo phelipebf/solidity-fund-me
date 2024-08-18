@@ -7,15 +7,17 @@ pragma solidity ^0.8.18;
 
 import { PriceConverter } from "./PriceConverter.sol";
 
+error NotOwner();
+
 contract FundMe {
     using PriceConverter for uint256;
 
-    uint256 public minimunUsd = 5e18;
+    uint256 public constant MIN_USD = 5e18; // 5 * 1e18 or 5 * 10**18
 
     address[] public funders;
     mapping(address funder => uint256 amountFunded) public addressToAmountFunded;
 
-    address public owner;
+    address public immutable owner;
 
     constructor() {
         owner = msg.sender;
@@ -25,17 +27,26 @@ contract FundMe {
         require(msg.sender == owner, "Sender is not owner!");
         _;
     }
-
     
     modifier onlyDono() {
-        require(msg.sender == owner, "Sender is not owner!");
+        if(msg.sender != owner) {
+            revert NotOwner();
+        }
         _;
+    }
+
+    receive() external payable {
+        fund();
+    }
+
+    fallback() external payable {
+        fund();
     }
 
     function fund() public payable  {
         // allow user to send money
         // have a minimum $ sent of 5 USD
-        require(msg.value.getConversionRate() >= minimunUsd, "Didn't send enough ETH");
+        require(msg.value.getConversionRate() >= MIN_USD, "Didn't send enough ETH");
         funders.push(msg.sender);
         addressToAmountFunded[msg.sender] = addressToAmountFunded[msg.sender] + msg.value;
     }
